@@ -1,0 +1,18 @@
+# Executed scripts
+*.sh
+
+# Sensetive data
+rsync_pass
+
+# Bin
+bin
+
+# Local uploaded files folder
+in
+
+# Logs
+logs
+*.log
+
+# Editor directories and files
+.vscode/*

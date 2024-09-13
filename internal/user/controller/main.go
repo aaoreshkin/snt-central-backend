@@ -53,9 +53,9 @@ func (controller *UserController) Find(w http.ResponseWriter, r *http.Request) {
 
 func (controller *UserController) First(w http.ResponseWriter, r *http.Request) {
 	// get id from request
-	id := chi.URLParam(r, "id")
+	email := chi.URLParam(r, "email")
 
-	result, err := controller.usecase.First(id)
+	result, err := controller.usecase.First(email)
 	if err != nil {
 		render.Render(w, r, common.ErrInvalidRequest(err))
 		return

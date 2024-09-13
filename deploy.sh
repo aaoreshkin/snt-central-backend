@@ -13,7 +13,7 @@
 GOOS=linux GOARCH=amd64 go build -o bin/main cmd/*.go
 
 # Get password from rsync_pass
-sshpass -f ./rsync_pass
+# sshpass -f ./rsync_pass
 
 # Deploy the binary file from local machine to the server
 rsync --archive --compress --delete bin/main ${SSH_URL}:${SERVICE_PATH}/bin/

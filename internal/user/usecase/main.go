@@ -34,7 +34,7 @@ func (usecase *UserUsecase) Create(entity *entity.User) (*entity.User, error) {
 	// Set entity hashed password
 	entity.Password = hashedPassword
 
-	hashedToken, err := rbac.HashToken(Subject{Email: entity.Email, Role: entity.Permission}, 1)
+	hashedToken, err := rbac.HashToken(Subject{Email: entity.Email, Role: entity.Permission}, 15)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +54,16 @@ func (usecase *UserUsecase) First(email string) (*entity.User, error) {
 }
 
 func (usecase *UserUsecase) Update(entity *entity.User, id uint64) (*entity.User, error) {
+
+	// Hash entity raw password
+	hashedPassword, err := common.HashPassword(entity.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set entity hashed password
+	entity.Password = hashedPassword
+
 	return usecase.repository.Update(entity, id)
 }
 
@@ -79,7 +89,7 @@ func (usecase *UserUsecase) Authenticate(entity *entity.User) (*entity.User, err
 		return nil, err
 	}
 
-	hashedToken, err := rbac.HashToken(Subject{Email: exist.Email, Role: exist.Permission}, 1)
+	hashedToken, err := rbac.HashToken(Subject{Email: exist.Email, Role: exist.Permission}, 15)
 	if err != nil {
 		return nil, err
 	}

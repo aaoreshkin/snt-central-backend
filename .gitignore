@@ -19,3 +19,4 @@ logs
 
 # Editor directories and files
 .vscode/*
+.qodo

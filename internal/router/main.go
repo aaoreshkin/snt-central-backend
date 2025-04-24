@@ -37,7 +37,13 @@ func New(ctx context.Context, manager *internal.Manager) (*Mux, error) {
 		// Mount the user handler on the "/v1/users" route
 		r.Mount("/users", router.handleUser())
 		// Mount the user handler on the "/v1/posts" route
-		r.Mount("/posts", router.handlePost())
+		r.Mount("/posts", router.handlePosts())
+		// Mount the user handler on the "/v1/events" route
+		r.Mount("/events", router.handleEvents())
+		// Mount the user handler on the "/v1/attachment" route
+		r.Mount("/attachments", router.handlerAttachments())
+		// Mount the documents handler on the "/v1/schedules" route
+		r.Mount("/schedules", router.handlerSchedules())
 	})
 
 	return router, nil

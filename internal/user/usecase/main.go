@@ -3,78 +3,98 @@ package usecase
 import (
 	"github.com/oreshkindev/rbac-middleware"
 	"github.com/oreshkindev/snt-central-backend/common"
-	"github.com/oreshkindev/snt-central-backend/internal/user/entity"
+	"github.com/oreshkindev/snt-central-backend/internal/user/model"
 )
 
 type (
-	UserUsecase struct {
-		repository entity.UserRepository
-	}
-
-	Subject struct {
-		Email string `json:"email"`
-		Role  string `json:"role"`
+	Usecase struct {
+		repository model.Repository
 	}
 )
 
-func NewUserUsecase(repository entity.UserRepository) *UserUsecase {
-	return &UserUsecase{
+const (
+	timeout         = 15
+	timeoutDuration = 480
+)
+
+func New(repository model.Repository) *Usecase {
+	return &Usecase{
 		repository: repository,
 	}
 }
 
-func (usecase *UserUsecase) Create(entity *entity.User) (*entity.User, error) {
+func (usecase *Usecase) Create(entity *model.User) (*model.User, error) {
+	var err error
 
 	// Hash entity raw password
-	hashedPassword, err := common.HashPassword(entity.Password)
-	if err != nil {
+	if entity.Password, err = common.HashPassword(entity.Password); err != nil {
 		return nil, err
 	}
 
-	// Set entity hashed password
-	entity.Password = hashedPassword
-
-	hashedToken, err := rbac.HashToken(Subject{Email: entity.Email, Role: entity.Permission}, 15)
-	if err != nil {
+	if entity.AccessToken, err = rbac.Hash(map[string]interface{}{
+		"email":      entity.Email,
+		"permission": entity.PermissionID,
+	}, timeout); err != nil {
 		return nil, err
 	}
 
-	// Set entity access token
-	entity.AccessToken = hashedToken
+	if entity.RefreshToken, err = rbac.Hash(map[string]interface{}{}, timeoutDuration); err != nil {
+		return nil, err
+	}
 
 	return usecase.repository.Create(entity)
 }
 
-func (usecase *UserUsecase) Find() ([]entity.User, error) {
+func (usecase *Usecase) Find() ([]model.User, error) {
 	return usecase.repository.Find()
 }
 
-func (usecase *UserUsecase) First(email string) (*entity.User, error) {
-	return usecase.repository.First(email)
+func (usecase *Usecase) First(id uint64) (*model.User, error) {
+	return usecase.repository.First(id)
 }
 
-func (usecase *UserUsecase) Update(entity *entity.User, id uint64) (*entity.User, error) {
+func (usecase *Usecase) Update(entity *model.User) (*model.User, error) {
+	var err error
 
-	// Hash entity raw password
-	hashedPassword, err := common.HashPassword(entity.Password)
+	// Получаем текущего пользователя из базы данных
+	exist, err := usecase.repository.Any("phone", entity.Phone)
 	if err != nil {
 		return nil, err
 	}
 
-	// Set entity hashed password
-	entity.Password = hashedPassword
+	// Если пароль не пустой, хешируем его, иначе используем старый пароль
+	if entity.Password != "" {
+		if entity.Password, err = common.HashPassword(entity.Password); err != nil {
+			return nil, err
+		}
+	} else {
+		entity.Password = exist.Password
+	}
 
-	return usecase.repository.Update(entity, id)
+	if entity.AccessToken, err = rbac.Hash(map[string]any{
+		"email":      exist.Email,
+		"permission": exist.PermissionID,
+	}, timeout); err != nil {
+		return nil, err
+	}
+
+	if entity.RefreshToken, err = rbac.Hash(map[string]any{}, timeoutDuration); err != nil {
+		return nil, err
+	}
+
+	return usecase.repository.Update(entity)
 }
 
-func (usecase *UserUsecase) Delete(id uint64) error {
+func (usecase *Usecase) Delete(id uint64) error {
 	return usecase.repository.Delete(id)
 }
 
-func (usecase *UserUsecase) Authenticate(entity *entity.User) (*entity.User, error) {
+func (usecase *Usecase) Authenticate(entity *model.User) (*model.User, error) {
+
+	var err error
 
 	// Check is user exist
-	exist, err := usecase.repository.First(entity.Email)
+	exist, err := usecase.repository.Any("phone", entity.Phone)
 	if err != nil {
 		return nil, err
 	}
@@ -89,18 +109,44 @@ func (usecase *UserUsecase) Authenticate(entity *entity.User) (*entity.User, err
 		return nil, err
 	}
 
-	hashedToken, err := rbac.HashToken(Subject{Email: exist.Email, Role: exist.Permission}, 15)
+	if exist.AccessToken, err = rbac.Hash(map[string]any{
+		"email":      exist.Email,
+		"permission": exist.PermissionID,
+	}, timeout); err != nil {
+		return nil, err
+	}
+
+	if exist.RefreshToken, err = rbac.Hash(map[string]any{}, timeoutDuration); err != nil {
+		return nil, err
+	}
+
+	return usecase.repository.Update(exist)
+}
+
+func (usecase *Usecase) Revoke(refresh_token string) (*model.User, error) {
+
+	var err error
+
+	if _, err := rbac.Validate(refresh_token); err != nil {
+		return nil, err
+	}
+
+	// Check is user exist
+	exist, err := usecase.repository.Any("refresh_token", refresh_token)
 	if err != nil {
 		return nil, err
 	}
 
-	// Set access token
-	exist.AccessToken = hashedToken
-
-	result, err := usecase.repository.Update(exist, exist.ID)
-	if err != nil {
+	if exist.AccessToken, err = rbac.Hash(map[string]any{
+		"email":      exist.Email,
+		"permission": exist.PermissionID,
+	}, timeout); err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	if exist.RefreshToken, err = rbac.Hash(map[string]any{}, timeoutDuration); err != nil {
+		return nil, err
+	}
+
+	return usecase.repository.Update(exist)
 }

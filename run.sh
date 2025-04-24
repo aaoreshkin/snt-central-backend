@@ -1,7 +1,6 @@
 #!/bin/sh
 
-. ./env.sh
-
+. ./build/env.sh
 
 # Run the Go program with data race detection enabled and the CGO_ENABLED
 # environment variable set to 1. This is done to enable the data race

@@ -1,12 +1,12 @@
-package user
+package events
 
 import (
 	"context"
 
 	"github.com/oreshkindev/snt-central-backend/internal/database"
-	"github.com/oreshkindev/snt-central-backend/internal/user/controller"
-	"github.com/oreshkindev/snt-central-backend/internal/user/repository"
-	"github.com/oreshkindev/snt-central-backend/internal/user/usecase"
+	"github.com/oreshkindev/snt-central-backend/internal/events/controller"
+	"github.com/oreshkindev/snt-central-backend/internal/events/repository"
+	"github.com/oreshkindev/snt-central-backend/internal/events/usecase"
 )
 
 type Manager struct {

@@ -2,107 +2,233 @@ package repository
 
 import (
 	"context"
+	"fmt"
+	"time"
 
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/oreshkindev/snt-central-backend/internal/database"
-	"github.com/oreshkindev/snt-central-backend/internal/user/entity"
+	"github.com/oreshkindev/snt-central-backend/internal/user/model"
 )
 
-type UserRepository struct {
-	context    context.Context
-	connection *database.Connection
+type (
+	Repository struct {
+		context    context.Context
+		connection *database.Connection
+	}
+)
+
+func New(context context.Context, connection *database.Connection) *Repository {
+	return &Repository{context, connection}
 }
 
-func NewUserRepository(context context.Context, connection *database.Connection) *UserRepository {
-	return &UserRepository{context, connection}
-}
+func (repository *Repository) Create(entity *model.User) (*model.User, error) {
+	const query = `
+	INSERT INTO users (
+		access_token,
+		description,
+		email,
+		fullname,
+		password,
+		permission_id,
+		phone,
+		position,
+		refresh_token
+	) VALUES (
+	 	$1, $2, $3, $4, $5, $6, $7, $8, $9
+	) RETURNING
+		id,
+		access_token,
+		description,
+		email,
+		fullname,
+		permission_id,
+		phone,
+		position,
+		refresh_token,
+		created_at,
+		updated_at
+`
 
-func (repository *UserRepository) Create(entity *entity.User) (*entity.User, error) {
+	var (
+		user model.User
+	)
 
-	query := `
-		INSERT INTO users (
-			access_token,
-			email,
-			password,
-			permission,
-			fullname,
-			phone
-		)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`
+	err := pgxscan.Get(
+		repository.context,
+		repository.connection,
+		&user,
+		query,
+		entity.AccessToken,
+		entity.Description,
+		entity.Email,
+		entity.Fullname,
+		entity.Password,
+		entity.PermissionID,
+		entity.Phone,
+		entity.Position,
+		entity.RefreshToken,
+	)
 
-	repository.connection.Pool.Exec(repository.context, query, entity.AccessToken, entity.Email, entity.Password, entity.Permission, entity.Fullname, entity.Phone)
-
-	return entity, nil
-}
-
-func (repository *UserRepository) Find() ([]entity.User, error) {
-	entities := []entity.User{}
-
-	query := `
-		SELECT *
-		FROM users
-	`
-
-	rows, err := repository.connection.Pool.Query(repository.context, query)
 	if err != nil {
 		return nil, err
 	}
 
-	for rows.Next() {
-		var user entity.User
-		if err := rows.Scan(&user.ID, &user.AccessToken, &user.Email, &user.Password, &user.Permission, &user.Fullname, &user.Phone, &user.UpdatedAt); err != nil {
-			return nil, err
-		}
-		entities = append(entities, user)
-	}
-
-	return entities, nil
+	return &user, nil
 }
 
-func (repository *UserRepository) First(email string) (*entity.User, error) {
-	entity := &entity.User{}
+func (repository *Repository) Find() ([]model.User, error) {
+	const query = `
+    SELECT
+		id,
+		access_token,
+		description,
+		email,
+		fullname,
+		permission_id,
+		phone,
+		position,
+		refresh_token,
+		created_at,
+		updated_at
+    FROM users
+	ORDER BY created_at DESC
+`
 
-	query := `
-		SELECT *
-		FROM users
-		WHERE email = $1;
-	`
+	var (
+		users []model.User
+	)
 
-	if err := repository.connection.QueryRow(repository.context, query, email).Scan(&entity.ID, &entity.AccessToken, &entity.Email, &entity.Password, &entity.Permission, &entity.Fullname, &entity.Phone, &entity.UpdatedAt); err != nil {
-		// Return an error if the product is not found.
+	err := pgxscan.Select(repository.context, repository.connection.Pool, &users, query)
+	if err != nil {
 		return nil, err
 	}
 
-	return entity, nil
+	return users, nil
 }
 
-func (repository *UserRepository) Update(entity *entity.User, id uint64) (*entity.User, error) {
+func (repository *Repository) First(id uint64) (*model.User, error) {
+	const query = `
+    SELECT
+		id,
+		access_token,
+		description,
+		email,
+		fullname,
+		permission_id,
+		phone,
+		position,
+		refresh_token,
+		created_at,
+		updated_at
+    FROM users
+    WHERE id = $1
+	ORDER BY created_at DESC
+`
 
-	query := `
-		UPDATE users
-		SET
-			access_token = $1,
-			email = $2,
-			password = $3,
-			permission = $4,
-			fullname = $5,
-			phone = $6
-		WHERE id = $7
-	`
+	var (
+		user model.User
+	)
 
-	repository.connection.Pool.Exec(repository.context, query, entity.AccessToken, entity.Email, entity.Password, entity.Permission, entity.Fullname, entity.Phone, id)
+	err := pgxscan.Get(repository.context, repository.connection.Pool, &user, query, id)
+	if err != nil {
+		return nil, err
+	}
 
-	return entity, nil
+	return &user, nil
 }
 
-func (repository *UserRepository) Delete(id uint64) error {
+func (repository *Repository) Any(key, value string) (*model.User, error) {
+	query := fmt.Sprintf(`
+        SELECT
+            *
+        FROM users
+        WHERE %s = $1;
+    `, key)
 
-	query := `
-		DELETE FROM users
-		WHERE id = $1
-	`
+	var (
+		user model.User
+	)
 
-	repository.connection.Pool.Exec(repository.context, query, id)
+	err := pgxscan.Get(repository.context, repository.connection.Pool, &user, query, value)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (repository *Repository) Update(entity *model.User) (*model.User, error) {
+	const query = `
+    UPDATE users
+    SET
+        access_token = COALESCE($1, access_token),
+        description = COALESCE($2, description),
+        email = COALESCE($3, email),
+        fullname = COALESCE($4, fullname),
+        password = COALESCE($5, password),
+        permission_id = COALESCE($6, permission_id),
+        phone = COALESCE($7, phone),
+        position = COALESCE($8, position),
+        refresh_token = COALESCE($9, refresh_token),
+        updated_at = $10
+    WHERE id = $11
+	RETURNING
+		id,
+		access_token,
+		description,
+		email,
+		fullname,
+		permission_id,
+		phone,
+		position,
+		refresh_token,
+		created_at,
+		updated_at
+`
+
+	var (
+		user model.User
+	)
+
+	err := pgxscan.Get(
+		repository.context,
+		repository.connection,
+		&user,
+		query,
+		entity.AccessToken,
+		entity.Description,
+		entity.Email,
+		entity.Fullname,
+		entity.Password,
+		entity.PermissionID,
+		entity.Phone,
+		entity.Position,
+		entity.RefreshToken,
+		time.Now(),
+		entity.ID,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (repository *Repository) Delete(id uint64) error {
+	const query = `
+	DELETE FROM users
+	WHERE id = $1
+`
+
+	result, err := repository.connection.Exec(repository.context, query, id)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return nil
+	}
 
 	return nil
 }

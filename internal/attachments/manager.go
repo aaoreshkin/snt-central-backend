@@ -1,12 +1,12 @@
-package user
+package attachments
 
 import (
 	"context"
 
+	"github.com/oreshkindev/snt-central-backend/internal/attachments/controller"
+	"github.com/oreshkindev/snt-central-backend/internal/attachments/repository"
+	"github.com/oreshkindev/snt-central-backend/internal/attachments/usecase"
 	"github.com/oreshkindev/snt-central-backend/internal/database"
-	"github.com/oreshkindev/snt-central-backend/internal/user/controller"
-	"github.com/oreshkindev/snt-central-backend/internal/user/repository"
-	"github.com/oreshkindev/snt-central-backend/internal/user/usecase"
 )
 
 type Manager struct {

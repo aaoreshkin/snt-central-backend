@@ -31,14 +31,14 @@ func (usecase *Usecase) Create(entity *model.User) (*model.User, error) {
 		return nil, err
 	}
 
-	if entity.AccessToken, err = rbac.Hash(map[string]interface{}{
+	if entity.AccessToken, err = rbac.Hash(map[string]any{
 		"email":      entity.Email,
 		"permission": entity.PermissionID,
 	}, timeout); err != nil {
 		return nil, err
 	}
 
-	if entity.RefreshToken, err = rbac.Hash(map[string]interface{}{}, timeoutDuration); err != nil {
+	if entity.RefreshToken, err = rbac.Hash(map[string]any{}, timeoutDuration); err != nil {
 		return nil, err
 	}
 
@@ -57,7 +57,7 @@ func (usecase *Usecase) Update(entity *model.User) (*model.User, error) {
 	var err error
 
 	// Получаем текущего пользователя из базы данных
-	exist, err := usecase.repository.Any("phone", entity.Phone)
+	exist, err := usecase.repository.Any("access_token", entity.AccessToken)
 	if err != nil {
 		return nil, err
 	}

@@ -217,7 +217,8 @@ func (repository *Repository) Update(entity *model.User) (*model.User, error) {
 
 func (repository *Repository) Delete(id uint64) error {
 	const query = `
-	DELETE FROM users
+	DELETE FROM
+		users
 	WHERE id = $1
 `
 

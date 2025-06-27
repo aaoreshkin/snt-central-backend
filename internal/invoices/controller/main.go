@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/oreshkindev/snt-central-backend/common"
-	"github.com/oreshkindev/snt-central-backend/internal/schedules/model"
+	"github.com/oreshkindev/snt-central-backend/internal/invoices/model"
 )
 
 type (
@@ -23,7 +23,7 @@ func New(usecase model.Usecase) *Controller {
 }
 
 func (controller *Controller) Create(w http.ResponseWriter, r *http.Request) {
-	entity := &model.Schedule{}
+	entity := &model.Invoice{}
 
 	if err := render.DecodeJSON(r.Body, entity); err != nil {
 		render.Render(w, r, common.ErrInvalidRequest(err))
@@ -67,7 +67,7 @@ func (controller *Controller) First(w http.ResponseWriter, r *http.Request) {
 
 func (controller *Controller) Update(w http.ResponseWriter, r *http.Request) {
 
-	entity := &model.Schedule{}
+	entity := &model.Invoice{}
 
 	if err := render.DecodeJSON(r.Body, entity); err != nil {
 		render.Render(w, r, common.ErrInvalidRequest(err))

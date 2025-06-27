@@ -1,12 +1,12 @@
-package user
+package invoices
 
 import (
 	"context"
 
 	"github.com/oreshkindev/snt-central-backend/internal/database"
-	"github.com/oreshkindev/snt-central-backend/internal/user/controller"
-	"github.com/oreshkindev/snt-central-backend/internal/user/repository"
-	"github.com/oreshkindev/snt-central-backend/internal/user/usecase"
+	"github.com/oreshkindev/snt-central-backend/internal/invoices/controller"
+	"github.com/oreshkindev/snt-central-backend/internal/invoices/repository"
+	"github.com/oreshkindev/snt-central-backend/internal/invoices/usecase"
 )
 
 type Manager struct {

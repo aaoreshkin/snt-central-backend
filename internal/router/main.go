@@ -44,6 +44,8 @@ func New(ctx context.Context, manager *internal.Manager) (*Mux, error) {
 		r.Mount("/attachments", router.handlerAttachments())
 		// Mount the documents handler on the "/v1/schedules" route
 		r.Mount("/schedules", router.handlerSchedules())
+		// Mount the invoices handler on the "/v1/invoices" route
+		r.Mount("/invoices", router.handlerInvoices())
 	})
 
 	return router, nil

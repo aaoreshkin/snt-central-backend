@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"github.com/oreshkindev/snt-central-backend/internal/posts/model"
+	"github.com/oreshkindev/snt-central-backend/internal/invoices/model"
 )
 
 type (
@@ -16,19 +16,19 @@ func New(repository model.Repository) *Usecase {
 	}
 }
 
-func (usecase *Usecase) Create(entity *model.Post) (*model.Post, error) {
+func (usecase *Usecase) Create(entity *model.Invoice) (*model.Invoice, error) {
 	return usecase.repository.Create(entity)
 }
 
-func (usecase *Usecase) Find() ([]model.Post, error) {
+func (usecase *Usecase) Find() ([]model.Invoice, error) {
 	return usecase.repository.Find()
 }
 
-func (usecase *Usecase) First(id uint64) (*model.Post, error) {
+func (usecase *Usecase) First(id uint64) (*model.Invoice, error) {
 	return usecase.repository.First(id)
 }
 
-func (usecase *Usecase) Update(entity *model.Post) (*model.Post, error) {
+func (usecase *Usecase) Update(entity *model.Invoice) (*model.Invoice, error) {
 	return usecase.repository.Update(entity)
 }
 

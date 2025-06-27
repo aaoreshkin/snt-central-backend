@@ -55,6 +55,20 @@ func (mux *Mux) handlerSchedules() chi.Router {
 	return router
 }
 
+func (mux *Mux) handlerInvoices() chi.Router {
+	router := chi.NewRouter()
+
+	controller := mux.manager.Invoices.Controller
+
+	router.With(rbac.Middleware(s, m)).Post("/", controller.Create)
+	router.Get("/", controller.Find)
+	router.Get("/{id}", controller.First)
+	router.With(rbac.Middleware(s, m)).Put("/", controller.Update)
+	router.With(rbac.Middleware(s, m)).Delete("/{id}", controller.Delete)
+
+	return router
+}
+
 func (mux *Mux) handleEvents() chi.Router {
 	router := chi.NewRouter()
 
